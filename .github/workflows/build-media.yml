@@ -242,93 +242,93 @@ jobs:
         # Get logs into the host
         sudo vagrant scp almalinux:${{ env.livemedia_resultdir }}/${{ env.results_name }}-logs.tar* ${{ env.results_path }}/
 
-    - uses: actions/upload-artifact@v4
-      name: Store logs as artifact
-      id: logs-artifact
-      if: success() || failure()
-      with:
-        name: AlmaLinux-${{ inputs.version_major }}.${{ env.version_minor }}-x86_64-Live-${{ matrix.image_types }}-logs.tar
-        path: ${{ env.results_path }}/*.tar
+    # - uses: actions/upload-artifact@v4
+    #   name: Store logs as artifact
+    #   id: logs-artifact
+    #   if: success() || failure()
+    #   with:
+    #     name: AlmaLinux-${{ inputs.version_major }}.${{ env.version_minor }}-x86_64-Live-${{ matrix.image_types }}-logs.tar
+    #     path: ${{ env.results_path }}/*.tar
 
-    - uses: actions/upload-artifact@v4
-      name: Store CHECKSUM as artifact
-      id: checksum-artifact
-      if: steps.get-media.outcome == 'success' && inputs.store_as_artifact
-      with:
-        name: "${{ env.results_name }}.iso.CHECKSUM"
-        path: ${{ env.results_path }}/${{ env.results_name }}.iso.CHECKSUM
+    # - uses: actions/upload-artifact@v4
+    #   name: Store CHECKSUM as artifact
+    #   id: checksum-artifact
+    #   if: steps.get-media.outcome == 'success' && inputs.store_as_artifact
+    #   with:
+    #     name: "${{ env.results_name }}.iso.CHECKSUM"
+    #     path: ${{ env.results_path }}/${{ env.results_name }}.iso.CHECKSUM
 
-    - uses: actions/upload-artifact@v4
-      name: Store ISO as artifact
-      id: iso-artifact
-      if: steps.get-media.outcome == 'success' && inputs.store_as_artifact
-      with:
-        name: "${{ env.results_name }}.iso"
-        compression-level: 1
-        path: ${{ env.results_path }}/${{ env.results_name }}.iso
+    # - uses: actions/upload-artifact@v4
+    #   name: Store ISO as artifact
+    #   id: iso-artifact
+    #   if: steps.get-media.outcome == 'success' && inputs.store_as_artifact
+    #   with:
+    #     name: "${{ env.results_name }}.iso"
+    #     compression-level: 1
+    #     path: ${{ env.results_path }}/${{ env.results_name }}.iso
 
-    - name: Configure AWS credentials
-      if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
-      uses: aws-actions/configure-aws-credentials@v4.0.2
-      with:
-        aws-access-key-id: ${{ secrets.S3_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+    # - name: Configure AWS credentials
+    #   if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
+    #   uses: aws-actions/configure-aws-credentials@v4.0.2
+    #   with:
+    #     aws-access-key-id: ${{ secrets.S3_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+    #     aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Publish to S3 Bucket and put object tagging with aws CLI
-      if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
-      run: |
-        cd ${{ env.results_path }}
-        for object in ${{ env.results_name }}.iso ${{ env.results_name }}-logs.tar.zst ${{ env.results_name }}.iso.CHECKSUM; do
-          aws s3 cp ${object} s3://${{ vars.AWS_S3_BUCKET }}/${{ env.date_stamp }}/
-          aws s3api put-object-tagging --bucket ${{ vars.AWS_S3_BUCKET }} --key ${{ env.date_stamp }}/${object} --tagging 'TagSet={Key=public,Value=yes}'
-        done
+    # - name: Publish to S3 Bucket and put object tagging with aws CLI
+    #   if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
+    #   run: |
+    #     cd ${{ env.results_path }}
+    #     for object in ${{ env.results_name }}.iso ${{ env.results_name }}-logs.tar.zst ${{ env.results_name }}.iso.CHECKSUM; do
+    #       aws s3 cp ${object} s3://${{ vars.AWS_S3_BUCKET }}/${{ env.date_stamp }}/
+    #       aws s3api put-object-tagging --bucket ${{ vars.AWS_S3_BUCKET }} --key ${{ env.date_stamp }}/${object} --tagging 'TagSet={Key=public,Value=yes}'
+    #     done
 
-    - name: Put S3 Bucket download URLs
-      if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
-      uses: actions/github-script@v7
-      with:
-        result-encoding: string
-        script: |
-          core.summary
-              .addHeading('S3 Bucket download URLs', '4')
-              .addLink('${{ env.results_name }}.iso.CHECKSUM', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso.CHECKSUM')
-              .addBreak()
-              .addLink('${{ env.results_name }}.iso', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso')
-              .addBreak()
-              .addLink('${{ env.results_name }}-logs.tar.zst', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}-logs.tar.zst')
-              .write()
+    # - name: Put S3 Bucket download URLs
+    #   if: steps.get-media.outcome == 'success' && inputs.upload_to_s3
+    #   uses: actions/github-script@v7
+    #   with:
+    #     result-encoding: string
+    #     script: |
+    #       core.summary
+    #           .addHeading('S3 Bucket download URLs', '4')
+    #           .addLink('${{ env.results_name }}.iso.CHECKSUM', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso.CHECKSUM')
+    #           .addBreak()
+    #           .addLink('${{ env.results_name }}.iso', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso')
+    #           .addBreak()
+    #           .addLink('${{ env.results_name }}-logs.tar.zst', 'https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}-logs.tar.zst')
+    #           .write()
 
-    - name: Send notification to Mattermost (AWS S3 links)
-      uses: mattermost/action-mattermost-notify@master
-      if: steps.get-media.outcome == 'success' && inputs.upload_to_s3 && inputs.notify_mattermost
-      with:
-        MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
-        MATTERMOST_CHANNEL: ${{ vars.MATTERMOST_CHANNEL }}
-        MATTERMOST_USERNAME: ${{ github.triggering_actor }}
-        TEXT: |
-          **AlmaLinux OS 9.${{ env.version_minor }} Live Media Build** `${{ env.date_stamp }}` generated by the GitHub [Action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          **CHECKSUM(SHA256):** https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso.CHECKSUM
+    # - name: Send notification to Mattermost (AWS S3 links)
+    #   uses: mattermost/action-mattermost-notify@master
+    #   if: steps.get-media.outcome == 'success' && inputs.upload_to_s3 && inputs.notify_mattermost
+    #   with:
+    #     MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+    #     MATTERMOST_CHANNEL: ${{ vars.MATTERMOST_CHANNEL }}
+    #     MATTERMOST_USERNAME: ${{ github.triggering_actor }}
+    #     TEXT: |
+    #       **AlmaLinux OS 9.${{ env.version_minor }} Live Media Build** `${{ env.date_stamp }}` generated by the GitHub [Action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+    #       **CHECKSUM(SHA256):** https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso.CHECKSUM
 
-          **ISO:**
-          - ${{ matrix.image_types }}: https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso
+    #       **ISO:**
+    #       - ${{ matrix.image_types }}: https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}.iso
 
-          **Logs:**
-          - ${{ matrix.image_types }}: https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}-logs.tar.zst
+    #       **Logs:**
+    #       - ${{ matrix.image_types }}: https://${{ vars.AWS_S3_BUCKET }}.s3-accelerate.dualstack.amazonaws.com/${{ env.date_stamp }}/${{ env.results_name }}-logs.tar.zst
 
-    - name: Send notification to Mattermost (Artifacts)
-      uses: mattermost/action-mattermost-notify@master
-      if: steps.get-media.outcome == 'success' && inputs.store_as_artifact && inputs.notify_mattermost && ! inputs.upload_to_s3
-      with:
-        MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
-        MATTERMOST_CHANNEL: ${{ vars.MATTERMOST_CHANNEL }}
-        MATTERMOST_USERNAME: ${{ github.triggering_actor }}
-        TEXT: |
-          **AlmaLinux OS 9.${{ env.version_minor }} Live Media Build** `${{ env.date_stamp }}` generated by the GitHub [Action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          **CHECKSUM(SHA256) [zipped]:** ${{ steps.checksum-artifact.outputs.artifact-url }}
+    # - name: Send notification to Mattermost (Artifacts)
+    #   uses: mattermost/action-mattermost-notify@master
+    #   if: steps.get-media.outcome == 'success' && inputs.store_as_artifact && inputs.notify_mattermost && ! inputs.upload_to_s3
+    #   with:
+    #     MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+    #     MATTERMOST_CHANNEL: ${{ vars.MATTERMOST_CHANNEL }}
+    #     MATTERMOST_USERNAME: ${{ github.triggering_actor }}
+    #     TEXT: |
+    #       **AlmaLinux OS 9.${{ env.version_minor }} Live Media Build** `${{ env.date_stamp }}` generated by the GitHub [Action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+    #       **CHECKSUM(SHA256) [zipped]:** ${{ steps.checksum-artifact.outputs.artifact-url }}
 
-          **ISO [zipped]:**
-          - ${{ matrix.image_types }}: ${{ steps.iso-artifact.outputs.artifact-url }}
+    #       **ISO [zipped]:**
+    #       - ${{ matrix.image_types }}: ${{ steps.iso-artifact.outputs.artifact-url }}
 
-          **Logs [zipped]:**
-          - ${{ matrix.image_types }}: ${{ steps.logs-artifact.outputs.artifact-url }}
+    #       **Logs [zipped]:**
+    #       - ${{ matrix.image_types }}: ${{ steps.logs-artifact.outputs.artifact-url }}
